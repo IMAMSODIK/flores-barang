@@ -35,5 +35,7 @@ class DatabaseSeeder extends Seeder
             'role' => 'karani',
             'password' => bcrypt('123')
         ]);
+
+        $this->call(KotaSeeder::class);
     }
 }
