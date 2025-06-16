@@ -15,7 +15,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('can:isAdmin')->group(function () {
         Route::apiResource('/karani', KaraniController::class);
         Route::apiResource('/kota', KotaController::class);
-        Route::apiResource('/barang', BarangController::class);
-        Route::apiResource('/update-barang', RequestUpdateBarangController::class);
     });
+
+    Route::apiResource('/barang', BarangController::class);
+    Route::apiResource('/update-barang', RequestUpdateBarangController::class);
+
+    Route::put('/barang/{id}/update-status', [BarangController::class, 'terimaBarang']);
 });

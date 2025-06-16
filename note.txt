@@ -11,3 +11,8 @@ besok
 - destroy masih belum bekerja
 - penerimaan barang
 - statistik
+
+
+statistik
+profile
+update profile

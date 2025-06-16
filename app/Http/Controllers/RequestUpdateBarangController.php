@@ -37,6 +37,15 @@ class RequestUpdateBarangController extends Controller
             $validated = $request->validate([
                 'user_id'          => 'required|exists:users,id',
                 'barang_id'        => 'required|exists:barangs,id',
+                'kota_asal'        => 'required|exists:kotas,id',
+                'kota_tujuan'      => 'required|exists:kotas,id',
+                'deskripsi_barang' => 'required|string',
+                'nama_pengirim'    => 'required|string|max:255',
+                'hp_pengirim'      => 'required|string|max:20',
+                'nama_penerima'    => 'required|string|max:255',
+                'hp_penerima'      => 'required|string|max:20',
+                'harga_awal'       => 'required|numeric|min:0',
+                'status_bayar' => 'required|string|in:Lunas,Belum Bayar,Transfer',
                 'alasan'           => 'nullable|string',
             ]);
 
@@ -48,9 +57,25 @@ class RequestUpdateBarangController extends Controller
                 ], 403);
             }
 
+            if ($barang->status_barang == "Diterima") {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Barang tidak bisa diupdate lagi.'
+                ], 403);
+            }
+
             $requestUpdate = RequestUpdateBarang::create([
                 'user_id' => $validated['user_id'],
                 'barang_id' => $validated['barang_id'],
+                'kota_asal'        => $validated['kota_asal'],
+                'kota_tujuan'      => $validated['kota_tujuan'],
+                'deskripsi_barang' => $validated['deskripsi_barang'],
+                'nama_pengirim'    => $validated['nama_pengirim'],
+                'hp_pengirim'      => $validated['hp_pengirim'],
+                'nama_penerima'    => $validated['nama_penerima'],
+                'hp_penerima'      => $validated['hp_penerima'],
+                'harga_awal'       => $validated['harga_awal'],
+                'status_bayar'     => $validated['status_bayar'],
                 'alasan' => $validated['alasan']
             ]);
 
@@ -95,35 +120,55 @@ class RequestUpdateBarangController extends Controller
         }
     }
 
-    // public function update(Request $request, $id)
-    // {
-    //     $request->validate([
-    //         'nama' => 'required|string|max:255|unique:kotas,nama,' . $id,
-    //     ]);
+    public function update(Request $r)
+    {
+        $r->validate([
+            'user_id'          => 'required|exists:users,id',
+            'id'               => 'required',
+            'status'           => 'required|string|max:20'
+        ]);
 
-    //     try {
-    //         $kota = Kota::findOrFail($id);
-    //         $kota->nama = $request->nama;
-    //         $kota->save();
+        try {
+            $updateBarang = RequestUpdateBarang::where('id', $r->id)->first();
+            if($r->status == 'Diterima'){
+                $barang = Barang::where('id', $updateBarang->barang_id)->first();
 
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Kota updated successfully',
-    //             'data' => $kota,
-    //         ]);
-    //     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Kota not found',
-    //         ], 404);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Failed to update kota',
-    //             'error' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
+                $barang->kota_asal = $updateBarang->kota_asal;
+                $barang->kota_tujuan = $updateBarang->kota_tujuan;
+                $barang->deskripsi_barang = $updateBarang->deskripsi_barang;
+                $barang->nama_pengirim = $updateBarang->nama_pengirim;
+                $barang->hp_pengirim = $updateBarang->hp_pengirim;
+                $barang->nama_penerima = $updateBarang->nama_penerima;
+                $barang->hp_penerima = $updateBarang->hp_penerima;
+                $barang->harga_awal = $updateBarang->harga_awal;
+                $barang->status_bayar = $updateBarang->status_bayar;
+
+                $updateBarang->status_update = "Diterima";
+            } elseif($r->status == 'Diterima'){
+                $updateBarang->status_update = "Ditolak";
+            }
+
+            $barang->save();
+            $updateBarang->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Barang updated successfully',
+                'data' => $updateBarang->load('barang'),
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Barang not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update Barang',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
     public function destroy($id)
     {

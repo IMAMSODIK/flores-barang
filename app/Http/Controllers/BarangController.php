@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 date_default_timezone_set('Asia/Jakarta');
@@ -51,6 +52,7 @@ class BarangController extends Controller
                 'status_bayar' => 'required|string|in:Lunas,Belum Bayar,Transfer',
                 'status_barang' => 'required|string|in:Diterima,Belum Diterima',
                 'foto_barang.*'    => 'required|image|mimes:jpg,jpeg,png|max:2048',
+                'catatan_pengiriman'       => 'nullable|string',
             ]);
 
             DB::beginTransaction();
@@ -86,7 +88,8 @@ class BarangController extends Controller
                 'hp_penerima'      => $validated['hp_penerima'],
                 'harga_awal'       => $validated['harga_awal'],
                 'status_bayar'     => $validated['status_bayar'],
-                'status_barang'    => $validated['status_barang']
+                'status_barang'    => $validated['status_barang'],
+                'catatan_pengiriman' => $validated['catatan_pengiriman'],
             ]);
 
             if ($request->hasFile('foto_barang')) {
@@ -146,57 +149,175 @@ class BarangController extends Controller
         }
     }
 
-    // public function update(Request $request, $id)
-    // {
-    //     $request->validate([
-    //         'nama' => 'required|string|max:255|unique:kotas,nama,' . $id,
-    //     ]);
+    public function update(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'kota_asal'        => 'required|exists:kotas,id',
+                'kota_tujuan'      => 'required|exists:kotas,id',
+                'deskripsi_barang' => 'required|string',
+                'nama_pengirim'    => 'required|string|max:255',
+                'hp_pengirim'      => 'required|string|max:20',
+                'nama_penerima'    => 'required|string|max:255',
+                'hp_penerima'      => 'required|string|max:20',
+                'harga_awal'       => 'required|numeric|min:0',
+                'status_bayar'     => 'required|string|in:Lunas,Belum Bayar,Transfer',
+                'status_barang'    => 'required|string|in:Diterima,Belum Diterima',
+                'foto_barang.*'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            ]);
 
-    //     try {
-    //         $kota = Kota::findOrFail($id);
-    //         $kota->nama = $request->nama;
-    //         $kota->save();
+            DB::beginTransaction();
 
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Kota updated successfully',
-    //             'data' => $kota,
-    //         ]);
-    //     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Kota not found',
-    //         ], 404);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Failed to update kota',
-    //             'error' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
+            $barang = Barang::with('fotoBarang')->findOrFail($id);
 
-    // public function destroy($id)
-    // {
-    //     try {
-    //         $kota = Kota::findOrFail($id);
-    //         $kota->delete();
+            $barang->update([
+                'kota_asal'        => $validated['kota_asal'],
+                'kota_tujuan'      => $validated['kota_tujuan'],
+                'deskripsi_barang' => $validated['deskripsi_barang'],
+                'nama_pengirim'    => $validated['nama_pengirim'],
+                'hp_pengirim'      => $validated['hp_pengirim'],
+                'nama_penerima'    => $validated['nama_penerima'],
+                'hp_penerima'      => $validated['hp_penerima'],
+                'harga_awal'       => $validated['harga_awal'],
+                'status_bayar'     => $validated['status_bayar'],
+                'status_barang'    => $validated['status_barang'],
+            ]);
 
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Kota deleted'
-    //         ]);
-    //     } catch (ModelNotFoundException $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Kota not found'
-    //         ], 404);
-    //     } catch (Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Failed to create kota',
-    //             'error' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
+            if ($request->hasFile('foto_barang')) {
+                foreach ($barang->fotoBarang as $foto) {
+                    Storage::delete('public/foto_barang/' . $foto->nama_file);
+                    $foto->delete();
+                }
+
+                foreach ($request->file('foto_barang') as $file) {
+                    $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                    $file->storeAs('public/foto_barang', $filename);
+
+                    FotoBarang::create([
+                        'barang_id' => $barang->id,
+                        'nama_file' => $filename
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data berhasil diupdate.',
+                'data'    => $barang->load('fotoBarang')
+            ], 200);
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors'  => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengupdate data.',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function terimaBarang(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'ttd_penerima'  => 'required|image|mimes:jpg,jpeg,png|max:2048',
+                'foto_penerima' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+                'harga_terbayar' => 'required|numeric|min:0',
+                'status_bayar' => 'required|string|in:Lunas,Belum Bayar,Transfer',
+                'catatan_penerimaan'       => 'nullable|string',
+            ]);
+
+            DB::beginTransaction();
+
+            $barang = Barang::findOrFail($id);
+
+            $ttdFile = $request->file('ttd_penerima');
+            $ttdFilename = 'ttd_' . time() . '_' . uniqid() . '.' . $ttdFile->getClientOriginalExtension();
+            $ttdFile->storeAs('public/foto_barang', $ttdFilename);
+
+            $fotoFile = $request->file('foto_penerima');
+            $fotoFilename = 'foto_' . time() . '_' . uniqid() . '.' . $fotoFile->getClientOriginalExtension();
+            $fotoFile->storeAs('public/foto_barang', $fotoFilename);
+
+            $barang->update([
+                'status_barang'   => 'Diterima',
+                'tanggal_terima'  => now(),
+                'ttd_penerima'    => $ttdFilename,
+                'foto_penerima'   => $fotoFilename,
+                'harga_terbayar'  => $request->harga_terbayar,
+                'status_bayar'    => $request->status_bayar,
+                'catatan_penerimaan' => $request->catatan_penerimaan
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Barang berhasil ditandai sebagai diterima.',
+                'data'    => $barang
+            ], 200);
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors'  => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui status barang.',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        $user = auth()->user();
+
+        if (!$user || $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki izin untuk menghapus data ini.'
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $barang = Barang::with('fotoBarang')->findOrFail($id);
+
+            foreach ($barang->fotoBarang as $foto) {
+                Storage::delete('public/foto_barang/' . $foto->nama_file);
+                $foto->delete();
+            }
+
+            $barang->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data barang berhasil dihapus.'
+            ], 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus data.',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
 }

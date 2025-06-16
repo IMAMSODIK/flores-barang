@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('kode_barang')->unique();
             $table->foreignId('user_id');
+            $table->foreignId('user_update')->nullable();
             $table->foreignId('kota_asal');
             $table->foreignId('kota_tujuan');
             $table->text('deskripsi_barang');
@@ -30,6 +31,8 @@ return new class extends Migration
             $table->string('foto_penerima')->nullable();
             $table->string('status_bayar')->default("Belum Bayar");
             $table->string('status_barang')->default("Belum Diterima");
+            $table->text('catatan_pengiriman')->nullable();
+            $table->text('catatan_penerimaan')->nullable();
             $table->timestamps();
         });
     }

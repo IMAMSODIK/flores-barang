@@ -13,9 +13,19 @@ return new class extends Migration
     {
         Schema::create('request_update_barangs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id');
             $table->foreignId('barang_id');
+            $table->foreignId('user_id');
+            $table->foreignId('kota_asal');
+            $table->foreignId('kota_tujuan');
+            $table->text('deskripsi_barang');
+            $table->string('nama_pengirim');
+            $table->string('hp_pengirim');
+            $table->string('nama_penerima');
+            $table->string('hp_penerima');
+            $table->decimal('harga_awal');
+            $table->string('status_bayar')->default("Belum Bayar");
             $table->text('alasan')->nullable();
+            $table->text('status_update')->nullable();
             $table->timestamps();
         });
     }
