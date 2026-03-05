@@ -95,7 +95,7 @@ class BarangController extends Controller
             if ($request->hasFile('foto_barang')) {
                 foreach ($request->file('foto_barang') as $file) {
                     $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
-                    $file->storeAs('public/foto_barang', $filename);
+                    $file->storeAs('foto_barang', $filename);
 
                     FotoBarang::create([
                         'barang_id' => $barang->id,
