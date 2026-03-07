@@ -17,4 +17,4 @@ statistik
 profile
 update profile
 
-test
+tester
