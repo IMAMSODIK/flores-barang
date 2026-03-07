@@ -14,15 +14,18 @@ class KotaSeeder extends Seeder
     public function run(): void
     {
         Kota::create([
-            'nama' => 'Sibolga'
+            'nama' => 'Sibolga',
+            'kode' => 'SBG'
         ]);
 
         Kota::create([
-            'nama' => 'Pandan'
+            'nama' => 'Pandan',
+            'kode' => 'PND'
         ]);
 
         Kota::create([
-            'nama' => 'Medan'
+            'nama' => 'Medan',
+            'kode' => 'MDN'
         ]);
     }
 }

@@ -57,10 +57,11 @@ class BarangController extends Controller
 
             DB::beginTransaction();
 
-            $kotaTujuan = Kota::where('id', $request->kota_tujuan)->pluck('nama')->first()[0];
+            // $kotaTujuan = Kota::where('id', $request->kota_tujuan)->pluck('nama')->first()[0];
+            $kotaAsal = Kota::where('id', $request->kota_asal)->pluck('kode')->first();
             $tanggalToday = date('dmy');
 
-            $lastResi = Barang::where('kode_barang', 'like', $kotaTujuan . '-' . $tanggalToday . '-%')
+            $lastResi = Barang::where('kode_barang', 'like', $kotaAsal . '-' . $tanggalToday . '-%')
                 ->orderBy('kode_barang', 'desc')
                 ->pluck('kode_barang')
                 ->first();
@@ -74,7 +75,7 @@ class BarangController extends Controller
             }
 
             $nextNumberFormatted = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-            $resi = $kotaTujuan . '-' . $tanggalToday . '-' . $nextNumberFormatted;
+            $resi = $kotaAsal . '-' . $tanggalToday . '-' . $nextNumberFormatted;
 
             $barang = Barang::create([
                 'kode_barang'      => $resi,
