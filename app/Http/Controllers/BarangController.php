@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -38,6 +39,7 @@ class BarangController extends Controller
 
     public function store(Request $request)
     {
+        Log::info('Request store barang', $request->all());
         try {
             $validated = $request->validate([
                 'user_id'          => 'required|exists:users,id',
@@ -112,14 +114,30 @@ class BarangController extends Controller
                 'data'    => $barang->load('fotoBarang')
             ], 201);
         } catch (ValidationException $e) {
+            Log::error('Validation Error Store Barang', [
+                'request' => $request->all(),
+                'errors' => $e->errors(),
+                'message' => $e->getMessage()
+            ]);
+
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
                 'errors'  => $e->errors()
             ], 422);
         } catch (Exception $e) {
+            Log::error('Error Store Barang', [
+                'request' => $request->all(),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create barang',
