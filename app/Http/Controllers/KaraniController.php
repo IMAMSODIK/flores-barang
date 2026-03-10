@@ -36,14 +36,13 @@ class KaraniController extends Controller
             Log::info('Request store karani', $request->all());
             $request->validate([
                 'name'     => 'required|string|max:255',
-                'username' => 'required|string|unique:users,username',
-                'password' => 'required|string|min:6'
+                'username' => 'required|string|unique:users,username'
             ]);
 
             $karani = User::create([
                 'name'     => $request->name,
                 'username' => $request->username,
-                'password' => Hash::make($request->password),
+                'password' => Hash::make($request->username),
                 'role'     => 'karani'
             ]);
 
