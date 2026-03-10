@@ -33,7 +33,7 @@ class KaraniController extends Controller
     public function store(Request $request)
     {
         try {
-            Log::info('Request store barang', $request->all());
+            Log::info('Request store karani', $request->all());
             $request->validate([
                 'name'     => 'required|string|max:255',
                 'username' => 'required|string|unique:users,username',
@@ -52,14 +52,14 @@ class KaraniController extends Controller
                 'data'    => $karani
             ], 201);
         } catch (ValidationException $e) {
-            Log::info('Request store barang', $e->getMessage());
+            Log::info('Request store karani', $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
                 'errors'  => $e->errors(),
             ], 422);
         } catch (Exception $e) {
-            Log::info('Request store barang', $e->getMessage());
+            Log::info('Request store karani', $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create karani',
@@ -94,7 +94,7 @@ class KaraniController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            Log::info('Request store barang', $request->all());
+            Log::info('Request store karani', $request->all());
             $request->validate([
                 'name'     => 'required|string|max:255',
                 'username'    => 'required|string|unique:users,username,' . $id,
@@ -110,14 +110,14 @@ class KaraniController extends Controller
                 'data'    => $karani
             ]);
         } catch (ModelNotFoundException $e) {
-            Log::info('Request store barang', $e->getMessage());
+            Log::info('Request store karani', $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Karani not found',
                 'errors'  => $e->getMessage(),
             ], 404);
         } catch (Exception $e) {
-            Log::info('Request store barang', $e->getMessage());
+            Log::info('Request store karani', $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update karani',
