@@ -32,11 +32,13 @@ class KotaController extends Controller
     {
         try {
             $request->validate([
-                'nama' => 'required|string|max:255|unique:kotas,nama'
+                'nama' => 'required|string|max:255|unique:kotas,nama',
+                'kode' => 'required|string|max:255|unique:kotas,kode'
             ]);
 
             $kota = Kota::create([
-                'nama' => $request->nama
+                'nama' => $request->nama,
+                'kode' => $request->kode,
             ]);
 
             return response()->json([
@@ -82,11 +84,13 @@ class KotaController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255|unique:kotas,nama,' . $id,
+            'kode' => 'required|string|max:255|unique:kotas,kode,' . $id,
         ]);
 
         try {
             $kota = Kota::findOrFail($id);
             $kota->nama = $request->nama;
+            $kota->kode = $request->kode;
             $kota->save();
 
             return response()->json([
