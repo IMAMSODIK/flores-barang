@@ -52,14 +52,21 @@ class KaraniController extends Controller
                 'data'    => $karani
             ], 201);
         } catch (ValidationException $e) {
-            Log::info('Request store karani', $e->getMessage());
+            Log::info('Validation error store karani', [
+                'message' => $e->getMessage(),
+                'errors'  => $e->errors()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
                 'errors'  => $e->errors(),
             ], 422);
         } catch (Exception $e) {
-            Log::info('Request store karani', $e->getMessage());
+            Log::error('Failed to create karani', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create karani',
@@ -94,34 +101,62 @@ class KaraniController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            Log::info('Request store karani', $request->all());
+
+            Log::info('Request update karani', $request->all());
+
             $request->validate([
                 'name'     => 'required|string|max:255',
-                'username'    => 'required|string|unique:users,username,' . $id,
-                'password' => 'required|string|min:6'
+                'username' => 'required|string|unique:users,username,' . $id,
+                'password' => 'nullable|string|min:6'
             ]);
 
             $karani = User::where('role', 'karani')->findOrFail($id);
 
-            $karani->update($request->only(['name', 'username']));
+            $data = [
+                'name'     => $request->name,
+                'username' => $request->username
+            ];
+
+            if ($request->filled('password')) {
+                $data['password'] = Hash::make($request->password);
+            }
+
+            $karani->update($data);
 
             return response()->json([
                 'success' => true,
                 'data'    => $karani
             ]);
         } catch (ModelNotFoundException $e) {
-            Log::info('Request store karani', $e->getMessage());
+
+            Log::warning('Karani not found', [
+                'id' => $id
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Karani not found',
-                'errors'  => $e->getMessage(),
+                'message' => 'Karani not found'
             ], 404);
-        } catch (Exception $e) {
-            Log::info('Request store karani', $e->getMessage());
+        } catch (ValidationException $e) {
+
+            Log::warning('Validation error update karani', [
+                'errors' => $e->errors()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update karani',
-                'errors'  => $e->getMessage(),
+                'message' => 'Validation error',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (Exception $e) {
+
+            Log::error('Failed update karani', [
+                'message' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update karani'
             ], 500);
         }
     }
