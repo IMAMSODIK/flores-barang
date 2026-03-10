@@ -42,7 +42,7 @@ class BarangController extends Controller
         Log::info('Request store barang', $request->all());
         try {
             $validated = $request->validate([
-                // 'user_id'          => 'required|exists:users,id',
+                'user_id'          => 'required|exists:users,id',
                 'kota_asal'        => 'required|exists:kotas,id',
                 'kota_tujuan'      => 'required|exists:kotas,id',
                 'deskripsi_barang' => 'required|string',
